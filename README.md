@@ -18,8 +18,11 @@ The goal is to understand:
 
     
 Questions are divided into:
+
 🟢 Easy
+
 🟡 Medium
+
 🔴 Hard / Senior Level
 
 Every topic uses simple words and practical examples.
