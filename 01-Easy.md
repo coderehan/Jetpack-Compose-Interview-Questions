@@ -83,9 +83,9 @@ fun Counter(count: Int) {
 
 🧠 Remember
 
-State
-  ↓
-UI
+    State
+     ↓
+    UI
 
 Compose is declarative.
 
@@ -135,29 +135,29 @@ Composition is the process where Compose executes Composable functions and build
 
 Think:
 
-Composable functions
+    Composable functions
         ↓
-Composition
+    Composition
         ↓
-UI
+    UI
 
 🏠 Real-Life Example
 
 You give a restaurant your order.
 
-Order
- ↓
-Kitchen processes order
- ↓
-Food is prepared
+    Order
+     ↓
+    Kitchen processes order
+     ↓
+    Food is prepared
 
 Similarly:
 
-Composable
- ↓
-Compose processes it
- ↓
-UI is produced
+    Composable
+     ↓
+    Compose processes it
+     ↓
+    UI is produced
 
 🧠 Remember
 
@@ -203,9 +203,9 @@ Compose recomposes the UI that depends on "count".
 
 🧠 Remember
 
-State changes
+    State changes
       ↓
-Affected UI recomposes
+    Affected UI recomposes
 
 🎯 Senior Follow-up
 
@@ -242,9 +242,9 @@ When "count" changes, Compose knows that UI reading "count" may need recompositi
 
 🧠 Remember
 
-State changes
+    State changes
      ↓
-UI may change
+    UI may change
 
 ---
 
@@ -266,9 +266,9 @@ The value survives recomposition.
 
 🧠 Remember
 
-remember
-   ↓
-Keep value across recompositions
+    remember
+     ↓
+    Keep value across recompositions
 
 ---
 
@@ -290,9 +290,9 @@ var count by remember {
 
 🧠 Remember
 
-mutableStateOf
+    mutableStateOf
       ↓
-Observable Compose state
+    Observable Compose state
 
 ---
 
@@ -430,8 +430,8 @@ LazyColumn {
 
 For a large list:
 
-Large list → LazyColumn
-Small fixed content → Column
+    Large list → LazyColumn
+    Small fixed content → Column
 
 ---
 
