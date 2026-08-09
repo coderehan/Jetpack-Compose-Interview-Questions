@@ -465,58 +465,58 @@ DisposableEffect
 
 🧠 Easy Level Quick Revision
 
-Compose
-   ↓
-Declarative UI
+    Compose
+       ↓
+    Declarative UI
 
-Composable
-   ↓
-Function that describes UI
+    Composable
+       ↓
+    Function that describes UI
 
-Composition
-   ↓
-Build UI
+    Composition
+       ↓
+    Build UI
 
-Recomposition
-   ↓
-Update affected UI when state changes
+    Recomposition
+       ↓
+    Update affected UI when state changes
 
-State
-   ↓
-Data that can change
+    State
+      ↓
+    Data that can change
 
-remember
-   ↓
-Keep value across recomposition
+    remember
+      ↓
+    Keep value across recomposition
 
-mutableStateOf
-   ↓
-Observable Compose state
+    mutableStateOf
+      ↓
+    Observable Compose state
 
-State Hoisting
-   ↓
-Move state to appropriate owner
+    State Hoisting
+      ↓
+    Move state to appropriate owner
 
-Modifier
-   ↓
-Configure UI
+    Modifier
+      ↓
+    Configure UI
 
-Column
-   ↓
-Vertical
+    Column
+      ↓
+    Vertical
 
-Row
-   ↓
-Horizontal
+    Row
+     ↓
+    Horizontal
 
-Box
-   ↓
-Overlay
+    Box
+     ↓
+    Overlay
 
-LazyColumn
-   ↓
-Large/lazy lists
+    LazyColumn
+     ↓
+    Large/lazy lists
 
-Effects
-   ↓
-Handle side effects correctly
+    Effects
+     ↓
+    Handle side effects correctly
