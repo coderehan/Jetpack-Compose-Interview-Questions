@@ -50,13 +50,13 @@ var text by rememberSaveable {
 
 🧠 Remember
 
-remember
+    remember
     ↓
-Recomposition
+    Recomposition
 
-rememberSaveable
+    rememberSaveable
     ↓
-Recomposition + saveable restoration
+    Recomposition + saveable restoration
 
 ---
 
@@ -82,13 +82,13 @@ Usually used by ViewModel/application layers to expose observable state.
 
 Typical Architecture
 
-ViewModel
-   ↓
-StateFlow
-   ↓
-Composable
-   ↓
-UI
+    ViewModel
+     ↓
+    StateFlow
+     ↓
+    Composable
+     ↓
+    UI
 
 🧠 Remember
 
@@ -119,13 +119,13 @@ when {
 
 For Android UI collecting a Flow:
 
-Flow
- ↓
-collectAsStateWithLifecycle()
- ↓
-Compose State
- ↓
-UI
+    Flow
+     ↓
+    collectAsStateWithLifecycle()
+     ↓
+    Compose State
+     ↓
+    UI
 
 ---
 
@@ -146,11 +146,11 @@ When the key changes, the previous effect is cancelled and a new one starts.
 
 Screen opens:
 
-Screen enters Composition
+    Screen enters Composition
         ↓
-LaunchedEffect
+    LaunchedEffect
         ↓
-Load data
+    Load data
 
 🧠 Remember
 
@@ -172,9 +172,9 @@ Use it when you need to publish Compose state to something outside Compose.
 
 🧠 Remember
 
-Successful recomposition
+    Successful recomposition
         ↓
-SideEffect
+    SideEffect
 
 ---
 
@@ -202,11 +202,11 @@ Leave → Unregister
 
 🧠 Remember
 
-Setup
-  ↓
-DisposableEffect
-  ↓
-Cleanup with onDispose
+    Setup
+     ↓
+    DisposableEffect
+     ↓
+    Cleanup with onDispose
 
 ---
 
@@ -289,11 +289,11 @@ LaunchedEffect(listState) {
 
 🧠 Remember
 
-Compose State
+    Compose State
      ↓
-snapshotFlow
+    snapshotFlow
      ↓
-Flow
+    Flow
 
 Useful when Compose state needs to participate in coroutine/Flow processing.
 
@@ -343,11 +343,11 @@ The key helps Compose identify the identity of each item.
 
 🧠 Remember
 
-List item identity
+    List item identity
         ↓
-Stable key
+    Stable key
         ↓
-Better item tracking
+    Better item tracking
 
 ---
 
@@ -446,15 +446,15 @@ fun LoginScreen(
 
 A common pattern:
 
-Composable
+    Composable
      │
      │ events
      ▼
- ViewModel
+    ViewModel
      │
      │ state
      ▼
-Composable
+    Composable
 
 Example
 
@@ -547,11 +547,11 @@ fun UserItem(
 
 🧠 Remember
 
-UI Event
-   ↓
-Callback
-   ↓
-Screen / ViewModel
+    UI Event
+     ↓
+    Callback
+     ↓
+    Screen / ViewModel
 
 This improves reusability and testability.
 
@@ -575,19 +575,19 @@ UDF means data moves in one direction.
 
 Example
 
-User clicks Like
+    User clicks Like
       ↓
-onLikeClicked()
+    onLikeClicked()
       ↓
-ViewModel
+    ViewModel
       ↓
-isLiked = true
+    isLiked = true
       ↓
-StateFlow emits new state
+    StateFlow emits new state
       ↓
-Compose recomposes
+    Compose recomposes
       ↓
-Like icon changes
+    Like icon changes
 
 🧠 Remember
 
@@ -613,11 +613,11 @@ data class UserUiState(
 
 Then:
 
-ViewModel
-   ↓
-UserUiState
-   ↓
-Compose
+    ViewModel
+     ↓
+    UserUiState
+     ↓
+    Compose
 
 🧠 Remember
 
@@ -699,14 +699,14 @@ A UI state object should represent:
 
 When answering a Medium-level Compose question, use:
 
-What is it?
+    What is it?
     ↓
-Why do we need it?
+    Why do we need it?
     ↓
-Simple example
+    Simple example
     ↓
-When should we use it?
+    When should we use it?
     ↓
-What should we avoid?
+    What should we avoid?
 
 This makes your answer clear and structured during an interview.
