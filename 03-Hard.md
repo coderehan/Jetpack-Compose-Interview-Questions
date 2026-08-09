@@ -60,21 +60,21 @@ Compose knows that this Composable reads "count".
 
 When:
 
-count changes
+    count changes
       ↓
-Compose knows this UI depends on count
+    Compose knows this UI depends on count
       ↓
-Composable becomes eligible for recomposition
+    Composable becomes eligible for recomposition
 
 🧠 Remember
 
-State Read
+    State Read
     ↓
-Dependency tracking
+    Dependency tracking
     ↓
-State Write
+    State Write
     ↓
-Recomposition of affected scope
+    Recomposition of affected scope
 
 ---
 
@@ -96,15 +96,15 @@ You normally use Compose without directly interacting with the runtime internals
 
 Think:
 
-Composable code
+    Composable code
       ↓
-Compose Compiler / Runtime
+    Compose Compiler / Runtime
       ↓
-Composition
+    Composition
       ↓
-Recomposition
+    Recomposition
       ↓
-UI updates
+    UI updates
 
 ---
 
@@ -156,13 +156,13 @@ Compose can determine which parts depend on it.
 
 🧠 Remember
 
-Snapshot State
+    Snapshot State
       ↓
-Reads tracked
+    Reads tracked
       ↓
-Writes detected
+    Writes detected
       ↓
-Affected UI updated
+    Affected UI updated
 
 ---
 
@@ -188,15 +188,15 @@ is a state write.
 
 Conceptually:
 
-Composable reads State
+    Composable reads State
         ↓
-Compose records dependency
+    Compose records dependency
         ↓
-State changes
+    State changes
         ↓
-Compose knows affected scope
+    Compose knows affected scope
         ↓
-Recomposition
+    Recomposition
 
 🧠 Remember
 
@@ -271,11 +271,11 @@ Strong skipping expands the situations in which eligible Composables can be skip
 
 🧠 Remember
 
-No meaningful input change
+    No meaningful input change
         ↓
-Can skip Composable
+    Can skip Composable
         ↓
-Less work
+    Less work
 
 🎯 Senior Follow-up
 
@@ -287,20 +287,20 @@ Strong skipping is a compiler/runtime optimization, not something you manually i
 
 Imagine:
 
-Parent
- ├── Header
- ├── Profile
- └── Counter
+    Parent
+     ├── Header
+     ├── Profile
+     └── Counter
 
 Only "Counter" depends on changing state.
 
 Ideally:
 
-State changes
+    State changes
      ↓
-Counter needs recomposition
+    Counter needs recomposition
      ↓
-Header/Profile can be skipped
+    Header/Profile can be skipped
 
 🧠 Remember
 
@@ -387,13 +387,13 @@ Additional considerations
 
 🧠 Remember
 
-Large data
-   ↓
-LazyColumn
-   ↓
-Stable keys
-   ↓
-Efficient item rendering
+    Large data
+       ↓
+    LazyColumn
+       ↓
+    Stable keys
+       ↓
+    Efficient item rendering
 
 ---
 
@@ -469,17 +469,17 @@ rememberCoroutineScope
 
 A common architecture:
 
-Repository
+    Repository
      ↓
-   Flow
+    Flow
      ↓
- ViewModel
+    ViewModel
      ↓
- StateFlow<UiState>
+    StateFlow<UiState>
      ↓
-Composable
+    Composable
      ↓
-collectAsStateWithLifecycle()
+    collectAsStateWithLifecycle()
      ↓
     UI
 
@@ -604,16 +604,16 @@ Compose should not become the place where all business logic lives.
 
 For a large application:
 
-app
- │
- ├── feature-home
- ├── feature-profile
- ├── feature-booking
- │
- ├── core-ui
- ├── core-network
- ├── core-database
- └── core-common
+    app
+    │
+    ├── feature-home
+    ├── feature-profile
+    ├── feature-booking
+    │
+    ├── core-ui
+    ├── core-network
+    ├── core-database
+    └── core-common
 
 Why?
 
@@ -731,17 +731,17 @@ Q2. Your LazyColumn contains 5,000 items. How would you optimize it?
 
 Think:
 
-LazyColumn
-   ↓
-Stable keys
-   ↓
-Efficient item Composable
-   ↓
-Avoid expensive work during composition
-   ↓
-Efficient image loading
-   ↓
-Paging if data is remote/large
+    LazyColumn
+      ↓
+    Stable keys
+      ↓
+    Efficient item Composable
+      ↓
+    Avoid expensive work during composition
+      ↓
+    Efficient image loading
+      ↓
+    Paging if data is remote/large
 
 ---
 
@@ -749,17 +749,17 @@ Q3. Where should UI state live?
 
 Answer using ownership:
 
-Local UI state
+    Local UI state
       ↓
-Composable
+    Composable
 
-Shared screen state
+    Shared screen state
       ↓
-ViewModel
+    ViewModel
 
-Application/domain state
+    Application/domain state
       ↓
-Appropriate domain/data owner
+    Appropriate domain/data owner
 
 ---
 
@@ -767,23 +767,23 @@ Q4. How would you design a Compose screen?
 
 Start with:
 
-UI State
-   ↓
-Events
-   ↓
-ViewModel
-   ↓
-UseCase
-   ↓
-Repository
+    UI State
+     ↓
+    Events
+     ↓
+    ViewModel
+     ↓
+    UseCase
+     ↓
+    Repository
 
 Then:
 
-ViewModel
-   ↓
-StateFlow<UiState>
-   ↓
-Composable
+    ViewModel
+      ↓
+    StateFlow<UiState>
+      ↓
+    Composable
 
 ---
 
@@ -820,13 +820,13 @@ Q7. When would you use "DisposableEffect"?
 
 When you have a setup/cleanup lifecycle:
 
-Register observer
+    Register observer
       ↓
-Composable exists
+    Composable exists
       ↓
-Composable leaves
+    Composable leaves
       ↓
-Unregister observer
+    Unregister observer
 
 ---
 
@@ -834,15 +834,15 @@ Q8. When would you use "derivedStateOf"?
 
 When:
 
-Input state changes frequently
+    Input state changes frequently
         ↓
-Derived result changes less frequently
+    Derived result changes less frequently
 
 Example:
 
-Scroll position
+    Scroll position
       ↓
-"Should Show Back To Top?"
+    "Should Show Back To Top?"
 
 ---
 
@@ -912,54 +912,23 @@ When an interviewer asks a Compose question, try to classify it first.
 
 ---
 
-⚡ Quick Revision Cheat Sheet
-
-Topic| Remember This
-Compose| Declarative UI
-Composable| Function that describes UI
-Composition| Initial UI construction
-Recomposition| Re-run affected Composables
-State| Data that can change and affect UI
-"remember"| Survives recomposition
-"rememberSaveable"| Saveable/restorable UI state
-State Hoisting| Move state to the appropriate owner
-"Modifier"| Configure/decorate UI
-"LazyColumn"| Efficient lazy list
-"LaunchedEffect"| Coroutine tied to Composition
-"SideEffect"| Runs after successful recomposition
-"DisposableEffect"| Setup + cleanup
-"rememberUpdatedState"| Latest value without restarting effect
-"derivedStateOf"| Derived state from changing state
-"snapshotFlow"| Compose state → Flow
-"CompositionLocal"| Ambient/contextual data
-UDF| State down, events up
-ViewModel| Screen state + event handling
-Stability| Helps Compose reason about unchanged values
-Skipping| Avoid unnecessary recomposition work
-Snapshot| Compose state observation/coordination
-Slot Table| Runtime composition data structure
-LazyColumn keys| Preserve item identity
-Clean Architecture| Keep UI/business/data responsibilities separated
-
----
-
 🎯 What You Should Be Able to Explain in an Interview
 
 For a Senior Android Engineer, don't stop at definitions.
 
 You should be comfortable explaining:
 
-"What?"
-   ↓
-"Why?"
-   ↓
-"When?"
-   ↓
-"What happens internally?"
-   ↓
-"What are the trade-offs?"
-   ↓
-"How would you use it in a real application?"
+    "What?"
+      ↓
+    "Why?"
+      ↓
+    "When?"
+      ↓
+    "What happens internally?"
+      ↓
+    "What are the trade-offs?"
+      ↓
+    "How would you use it in a real application?"
 
 For example:
 
@@ -987,9 +956,9 @@ When you get any Jetpack Compose question, think:
       ↓          ↓          ↓
     STATE      UI FLOW    EFFECTS
       │          │          │
- remember     UDF       LaunchedEffect
- StateFlow    Events     DisposableEffect
- Hoisting     ViewModel  SideEffect
+    remember     UDF       LaunchedEffect
+    StateFlow    Events     DisposableEffect
+    Hoisting     ViewModel  SideEffect
       │          │          │
       └──────────┼──────────┘
                  ↓
@@ -1000,7 +969,7 @@ When you get any Jetpack Compose question, think:
                  │
        ┌─────────┼─────────┐
        ↓         ↓         ↓
-   Stability   Skipping   Lists
+    Stability   Skipping   Lists
        │         │         │
        └─────────┼─────────┘
                  ↓
@@ -1049,19 +1018,19 @@ Navigation
 
 Instead demonstrate that you understand:
 
-Declarative UI
+    Declarative UI
       ↓
-State
+    State
       ↓
-Recomposition
+    Recomposition
       ↓
-UDF
+    UDF
       ↓
-ViewModel
+    ViewModel
       ↓
-Architecture
+    Architecture
       ↓
-Performance
+    Performance
 
 That is the difference between:
 
@@ -1077,17 +1046,17 @@ and:
 
 For every topic in this README:
 
-Read
- ↓
-Understand
- ↓
-Write a small example
- ↓
-Run it
- ↓
-Explain it without looking
- ↓
-Practice the Senior follow-up
+    Read
+     ↓
+    Understand
+     ↓
+    Write a small example
+     ↓
+    Run it
+     ↓
+    Explain it without looking
+     ↓
+    Practice the Senior follow-up
 
 The goal is not to memorize answers.
 
