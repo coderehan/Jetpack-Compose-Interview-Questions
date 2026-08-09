@@ -1,1068 +1,220 @@
-# 🔴 Jetpack Compose Interview Questions — Hard / Senior Level
+# 🔴 Hard — Jetpack Compose
 
-A practical Jetpack Compose interview preparation guide for Senior Android Engineers.
+> Recomposition internals, performance, and senior-level architecture.
+---
 
-This section focuses on:
+### 31. How does Recomposition actually work?
 
-- Compose internals
-- Recomposition
-- Runtime
-- Stability
-- Performance
-- Architecture
-- Flow + ViewModel
-- Testing
-- Real-world Senior-level scenarios
+Compose tracks **which state each composable reads** during composition; when a state's value changes, only the composables that actually read it are scheduled for recomposition.
 
 ---
 
-📚 Topics
+### 32. Compose Runtime
 
-31. How does Recomposition actually work?
-32. Compose Runtime
-33. Slot Table
-34. Compose Snapshots
-35. State Reads and Writes
-36. Stability
-37. Stable vs Unstable Types
-38. Strong Skipping
-39. Skipping Recomposition
-40. Recomposition Performance
-41. Large LazyColumn Performance
-42. "derivedStateOf" vs "remember"
-43. "LaunchedEffect" vs "rememberCoroutineScope"
-44. Compose + Flow Architecture
-45. Where should State live?
-46. Compose + Clean Architecture
-47. Compose + Multi-Module Architecture
-48. Compose Performance Debugging
-49. Compose Testing
-50. Real-World Senior-Level Questions
+The underlying engine (separate from `compose-ui`) that manages the **Composition, Slot Table, and Snapshot state system** — it's what makes Compose's incremental updates possible.
 
 ---
 
-31. 🔬 How does Recomposition actually work?
+### 33. Slot Table
 
-💡 Simple Explanation
+The Runtime's internal **data structure that stores the UI tree** and associated state — it's what lets Compose diff and patch efficiently instead of rebuilding everything.
 
-Compose tracks which state values a Composable reads.
+🏠 Like a seating chart that tracks exactly who sits where, so updating one seat doesn't require redoing the whole chart.
 
-Suppose:
+---
 
-@Composable
-fun Counter(
-    count: State<Int>
-) {
-    Text("${count.value}")
+### 34. Compose Snapshot System
+
+An MVCC-style (multi-version) system that tracks state reads/writes in **isolated snapshots**, so Compose knows exactly which reads depend on which writes.
+
+```kotlin
+Snapshot.withMutableSnapshot {
+    stateA.value = 1
+    stateB.value = 2 // both changes seen atomically
 }
-
-Compose knows that this Composable reads "count".
-
-When:
-
-    count changes
-      ↓
-    Compose knows this UI depends on count
-      ↓
-    Composable becomes eligible for recomposition
-
-🧠 Remember
-
-    State Read
-    ↓
-    Dependency tracking
-    ↓
-    State Write
-    ↓
-    Recomposition of affected scope
+```
 
 ---
 
-32. ⚙️ What is the Compose Runtime?
+### 35. State Reads and Writes
 
-💡 Simple Answer
+A composable only recomposes if it **reads** a state value directly during its execution (e.g. `state.value`) — writing to state elsewhere doesn't trigger recomposition in composables that never read it.
 
-The Compose Runtime is the engine that manages things such as:
-
-- Composition
-- Recomposition
-- State observation
-- Remembered values
-- Composition lifecycle
-
-You normally use Compose without directly interacting with the runtime internals.
-
-🎯 Senior Understanding
-
-Think:
-
-    Composable code
-      ↓
-    Compose Compiler / Runtime
-      ↓
-    Composition
-      ↓
-    Recomposition
-      ↓
-    UI updates
+```kotlin
+val count = remember { mutableStateOf(0) }
+Text("Static") // doesn't read count -> never recomposes
+Text("${count.value}") // reads count -> recomposes on change
+```
 
 ---
 
-33. 🗃️ What is the Slot Table?
+### 36. What is Stability in Compose?
 
-💡 Simple Answer
-
-The Slot Table is an internal Compose Runtime data structure used to keep information about the composition.
-
-It helps Compose remember things such as:
-
-Composition structure
-Remembered values
-Groups / identity information
-
-🧠 Simple Interview Answer
-
-«"The Slot Table is an internal runtime structure that stores information about the composition so Compose can maintain and update it efficiently across recompositions."»
-
-You don't need to implement it.
-
-🎯 Senior Follow-up
-
-The important point is understanding that "remember" is not simply a normal variable magically surviving function calls. Compose associates remembered values with positions/groups in the composition.
+A type is **stable** if Compose can guarantee its equality check reliably reflects whether it changed — stable parameters let Compose **skip** unnecessary recomposition.
 
 ---
 
-34. 📸 What is the Compose Snapshot System?
+### 37. Stable vs Unstable Types
 
-💡 Simple Answer
+`val` primitives, `String`, and immutable data classes are usually stable. `var` properties, mutable `List`/`Map`, or classes without `@Immutable`/`@Stable` are treated as **unstable** by default.
 
-Compose uses a snapshot system to manage observable state and coordinate reads/writes of Compose state.
+```kotlin
+@Immutable
+data class User(val id: String, val name: String) // stable
 
-For example:
-
-var count by mutableStateOf(0)
-
-When code reads:
-
-Text("$count")
-
-Compose can track that state read.
-
-When the state changes:
-
-count++
-
-Compose can determine which parts depend on it.
-
-🧠 Remember
-
-    Snapshot State
-      ↓
-    Reads tracked
-      ↓
-    Writes detected
-      ↓
-    Affected UI updated
+data class MutableUser(var name: String) // unstable — var breaks stability
+```
 
 ---
 
-35. 👀 State Reads and Writes
+### 38. What is Strong Skipping?
 
-This is important for understanding recomposition.
-
-Suppose:
-
-var count by mutableStateOf(0)
-
-A Composable reads:
-
-Text("$count")
-
-This is a state read.
-
-Then:
-
-count++
-
-is a state write.
-
-Conceptually:
-
-    Composable reads State
-        ↓
-    Compose records dependency
-        ↓
-    State changes
-        ↓
-    Compose knows affected scope
-        ↓
-    Recomposition
-
-🧠 Remember
-
-«Reads create dependencies. Writes can invalidate those dependencies.»
+A compiler mode (Compose 1.5.4+) that makes **more parameter types skippable by default**, including unstable ones (using `equals` at runtime), reducing unnecessary recompositions without manual annotations.
 
 ---
 
-36. 🟢 What is Stability in Compose?
+### 39. Skipping Recomposition
 
-💡 Simple Answer
+If all of a composable's parameters are **stable and unchanged**, Compose skips re-running it entirely — a key performance optimization built into the Runtime.
 
-Stability helps Compose determine whether a value can be safely considered unchanged between recompositions.
-
-Stable values make it easier for Compose to skip unnecessary work.
-
-Example
-
-data class User(
-    val id: String,
-    val name: String
-)
-
-Whether a type is considered stable depends on its properties and how Compose/compiler can reason about them.
-
-🧠 Remember
-
-Stability is about:
-
-«Can Compose safely reason that this value hasn't meaningfully changed?»
-
----
-
-37. 🟢 Stable vs Unstable Types
-
-Imagine:
-
+```kotlin
 @Composable
-fun UserCard(
-    user: User
-) {
+fun UserRow(user: User) { // stable params -> skipped if user is unchanged
     Text(user.name)
 }
-
-If "User" is considered unstable, Compose may have less ability to skip recomposition of that function.
-
-With stable types, Compose has stronger guarantees for optimization.
-
-🎯 Senior Follow-up
-
-Interviewers may ask:
-
-«"How do you make a class stable?"»
-
-Possible approaches depend on the situation:
-
-- Use immutable types
-- Use stable property types
-- Use appropriate Compose stability annotations when their contract is actually satisfied
-- Avoid unnecessary mutable references
-
-Don't add "@Stable" simply to silence a performance problem.
+```
 
 ---
 
-38. ⚡ What is Strong Skipping?
+### 40. How do you optimize Recomposition?
 
-💡 Simple Answer
+- Keep state as close as possible to where it's used
+- Use stable keys in lists
+- Avoid reading state you don't need in a composable
+- Use `derivedStateOf` for computed values
+- Keep composables small and focused
 
-Skipping means Compose can avoid executing a Composable when its inputs haven't meaningfully changed.
+```kotlin
+// ❌ whole screen recomposes on scroll
+@Composable
+fun Screen(scrollState: ScrollState) { /* everything here */ }
 
-Strong skipping expands the situations in which eligible Composables can be skipped, including cases involving unstable parameters, by using runtime comparisons according to the compiler/runtime rules.
-
-🧠 Remember
-
-    No meaningful input change
-        ↓
-    Can skip Composable
-        ↓
-    Less work
-
-🎯 Senior Follow-up
-
-Strong skipping is a compiler/runtime optimization, not something you manually implement for every Composable.
+// ✅ isolate the part that actually needs scrollState
+@Composable
+fun ScrollAwareHeader(scrollState: ScrollState) { /* only this recomposes */ }
+```
 
 ---
 
-39. ⏭️ What is Skipping Recomposition?
+### 41. Large LazyColumn Performance
 
-Imagine:
+Use **stable keys**, avoid heavy work inside item composables, use `contentType` for mixed item layouts, and avoid reading unrelated state inside list items.
 
-    Parent
-     ├── Header
-     ├── Profile
-     └── Counter
-
-Only "Counter" depends on changing state.
-
-Ideally:
-
-    State changes
-     ↓
-    Counter needs recomposition
-     ↓
-    Header/Profile can be skipped
-
-🧠 Remember
-
-Good Compose design helps Compose skip work that doesn't need to happen.
-
----
-
-40. 🚀 How do you optimize Recomposition?
-
-Common techniques
-
-1. Keep state close to where it is needed
-
-Don't make the entire screen depend on a tiny piece of state unnecessarily.
-
-2. Use stable keys
-
-Especially for lists.
-
-3. Avoid unnecessary state reads
-
-Only read state where needed.
-
-4. Use "derivedStateOf" when appropriate
-
-For frequently changing inputs with less frequently changing derived output.
-
-5. Keep Composables focused
-
-Instead of one huge Composable:
-
-HomeScreen()
-
-break it into meaningful pieces:
-
-HomeHeader()
-SearchBar()
-ProductList()
-ProductCard()
-BottomBar()
-
-🧠 Remember
-
-«Reduce unnecessary work, not recomposition at all costs.»
-
-Recomposition itself is normal.
-
----
-
-41. 📜 Large LazyColumn Performance
-
-Suppose you have:
-
-10,000 products
-
-Don't do:
-
-Column {
-    products.forEach {
-        ProductItem(it)
-    }
-}
-
-Use:
-
+```kotlin
 LazyColumn {
-
-    items(
-        items = products,
-        key = { it.id }
-    ) {
-        ProductItem(it)
+    items(items, key = { it.id }, contentType = { it.type }) { item ->
+        ItemRow(item)
     }
 }
-
-Additional considerations
-
-- Stable keys
-- Avoid unnecessary state inside each item
-- Avoid expensive calculations during composition
-- Load images efficiently
-- Use paging for very large remote datasets
-- Keep item Composables reasonably focused
-
-🧠 Remember
-
-    Large data
-       ↓
-    LazyColumn
-       ↓
-    Stable keys
-       ↓
-    Efficient item rendering
+```
 
 ---
 
-42. ⚡ "derivedStateOf" vs "remember"
+### 42. `derivedStateOf` vs `remember`
 
-This is a common interview trap.
+`remember` just caches a value across recomposition. `derivedStateOf` additionally **recalculates when its inputs change but only notifies dependents if the output actually differs**.
 
-"remember"
-
-Caches a value across recompositions.
-
-val value = remember {
-    expensiveCalculation()
-}
-
-"derivedStateOf"
-
-Creates state derived from other state.
-
-val showButton by remember {
-    derivedStateOf {
-        listState.firstVisibleItemIndex > 0
-    }
-}
-
-🧠 Remember
-
-remember
-→ "Remember this value."
-
-derivedStateOf
-→ "This value is derived from other changing state."
+```kotlin
+val isScrolled by remember { derivedStateOf { scrollState.value > 0 } }
+// vs plain remember, which would recompute+notify on every scroll pixel
+```
 
 ---
 
-43. 🚀 "LaunchedEffect" vs "rememberCoroutineScope"
+### 43. `LaunchedEffect` vs `rememberCoroutineScope`
 
-"LaunchedEffect"
+`LaunchedEffect` runs automatically **tied to the Composition lifecycle**. `rememberCoroutineScope` gives you a scope to launch coroutines **manually**, e.g. from a click handler.
 
-Starts a coroutine as part of the Composition lifecycle.
-
-LaunchedEffect(userId) {
-    viewModel.load(userId)
-}
-
-"rememberCoroutineScope"
-
-Gives you a scope tied to the Composition that you can launch from event callbacks.
-
+```kotlin
 val scope = rememberCoroutineScope()
-
-Button(
-    onClick = {
-        scope.launch {
-            snackbarHostState.showSnackbar("Saved")
-        }
-    }
-) {
+Button(onClick = { scope.launch { snackbarHostState.showSnackbar("Saved") } }) {
     Text("Save")
 }
-
-🧠 Remember
-
-LaunchedEffect
-→ Coroutine triggered by Composition/key changes
-
-rememberCoroutineScope
-→ Coroutine launched from UI events
+```
 
 ---
 
-44. 🌊 Compose + Flow Architecture
+### 44. Compose + Flow Architecture
 
-A common architecture:
+Repository exposes `Flow` → ViewModel converts to `StateFlow` (single source of truth) → Compose collects it with `collectAsStateWithLifecycle`.
 
-    Repository
-     ↓
-    Flow
-     ↓
-    ViewModel
-     ↓
-    StateFlow<UiState>
-     ↓
-    Composable
-     ↓
-    collectAsStateWithLifecycle()
-     ↓
-    UI
-
-Example:
-
-data class HomeUiState(
-    val isLoading: Boolean = false,
-    val products: List<Product> = emptyList(),
-    val error: String? = null
-)
-
-ViewModel:
-
-class HomeViewModel(
-    private val repository: ProductRepository
-) : ViewModel() {
-
-    val uiState: StateFlow<HomeUiState> =
-        repository.products
-            .map {
-                HomeUiState(
-                    products = it
-                )
-            }
-            .stateIn(
-                viewModelScope,
-                SharingStarted.WhileSubscribed(5_000),
-                HomeUiState()
-            )
+```kotlin
+class ProfileViewModel(repo: ProfileRepository) : ViewModel() {
+    val uiState = repo.observeProfile()
+        .map { ProfileState(user = it) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ProfileState())
 }
-
-UI:
-
-val state by viewModel.uiState
-    .collectAsStateWithLifecycle()
+```
 
 ---
 
-45. 📍 Where should State live?
+### 45. Where should State live?
 
-This is a very important Senior-level question.
-
-Ask:
-
-«Who needs this state?»
-
-Only one small Composable needs it
-
-Keep it locally:
-
-remember
-
-Multiple Composables need it
-
-Hoist it to their common parent.
-
-Screen-level state
-
-Usually:
-
-ViewModel
-
-Business/application state
-
-Usually belongs outside the UI layer, such as:
-
-Repository
-Domain
-ViewModel
-
-depending on the ownership and architecture.
-
-🧠 Remember
-
-«State should live at the lowest level that owns it and needs to share it.»
+As **low as possible** while still being shared by everything that needs it — screen-level state in the ViewModel, purely visual/transient state (like a scroll position) can stay local with `remember`.
 
 ---
 
-46. 🏗️ Compose + Clean Architecture
+### 46. Compose + Clean Architecture
 
-A common architecture:
+Compose sits at the **UI layer** only — it reads `UiState` from the ViewModel (presentation layer), which calls UseCases (domain layer), which call Repositories (data layer). Compose never touches domain/data directly.
 
-                UI
-                 │
-                 ▼
-            ViewModel
-                 │
-                 ▼
-             UseCase
-                 │
-                 ▼
-            Repository
-                 │
-        ┌────────┴────────┐
-        ▼                 ▼
-      Remote             Local
-       API                DB
-
-Compose belongs primarily to the presentation/UI layer.
-
-Example
-
-presentation/
-    HomeScreen.kt
-    HomeViewModel.kt
-
-domain/
-    GetProductsUseCase.kt
-
-data/
-    ProductRepositoryImpl.kt
-    ProductApi.kt
-    ProductDao.kt
-
-🧠 Remember
-
-Compose should not become the place where all business logic lives.
+```
+UI (Compose) → ViewModel → UseCase → Repository → Data Source
+```
 
 ---
 
-47. 📦 Compose + Multi-Module Architecture
+### 47. Compose + Multi-Module Architecture
 
-For a large application:
-
-    app
-    │
-    ├── feature-home
-    ├── feature-profile
-    ├── feature-booking
-    core
-    │
-    ├── core-ui
-    ├── core-network
-    ├── core-database
-    └── core-common
-
-Why?
-
-Benefits include:
-
-- Better separation
-- Faster incremental builds
-- Team ownership
-- Reduced coupling
-- Reusability
-
-Example
-
-A shared design system:
-
-core-ui
-   ↓
-Buttons
-Text styles
-Theme
-Spacing
-Components
-
-Feature modules consume it.
+Common split: a `:core-ui` module for shared design-system composables, `:feature-x` modules owning their own screens/ViewModels, and `:core-navigation` wiring routes between features.
 
 ---
 
-48. 🔍 How do you debug Compose Performance?
+### 48. How do you debug Compose Performance?
 
-Don't simply say:
-
-«"I'll reduce recomposition."»
-
-First identify the actual problem.
-
-Tools / approaches
-
-Use:
-
-- Layout Inspector
-- Compose recomposition information
-- Android Studio profiling tools
-- Macrobenchmark
-- Baseline Profiles
-- Tracing where appropriate
-
-Investigate
-
-Is composition expensive?
-Is layout expensive?
-Is drawing expensive?
-Are images expensive?
-Are lists inefficient?
-Are there unnecessary state reads?
-Are unstable parameters causing extra work?
-
-🧠 Remember
-
-«Measure first. Optimize second.»
+Use **Layout Inspector** to see recomposition counts/skips, enable the Compose compiler's `@Stable`/`@Immutable` reports, and use `Modifier.composed { }` or manual logging in `SideEffect` to trace unexpected recompositions.
 
 ---
 
-49. 🧪 Compose Testing
+### 49. Compose Testing
 
-Compose provides testing APIs for finding nodes and interacting with UI.
+`ComposeTestRule` lets you set content and assert on nodes using semantics — `onNodeWithText`, `performClick`, `assertIsDisplayed`, etc.
 
-Example:
+```kotlin
+@get:Rule val composeRule = createComposeRule()
 
-composeTestRule
-    .onNodeWithText("Login")
-    .performClick()
-
-Then:
-
-composeTestRule
-    .onNodeWithText("Welcome")
-    .assertIsDisplayed()
-
-What can you test?
-
-UI visibility
-Text
-Semantics
-Clicks
-State-driven UI
-Navigation behaviour
-
-🧠 Remember
-
-Prefer testing observable UI behaviour rather than implementation details.
-
----
-
-50. 🎯 Real-World Senior-Level Questions
-
-These are the questions I'd especially practice verbally.
-
----
-
-Q1. A screen is recomposing too much. How would you investigate?
-
-Think:
-
-1. Identify which Composable is recomposing
-2. Find which state it reads
-3. Check parameter stability
-4. Check list keys
-5. Look for unnecessary state reads
-6. Measure performance
-7. Optimize only the actual bottleneck
-
----
-
-Q2. Your LazyColumn contains 5,000 items. How would you optimize it?
-
-Think:
-
-    LazyColumn
-      ↓
-    Stable keys
-      ↓
-    Efficient item Composable
-      ↓
-    Avoid expensive work during composition
-      ↓
-    Efficient image loading
-      ↓
-    Paging if data is remote/large
-
----
-
-Q3. Where should UI state live?
-
-Answer using ownership:
-
-    Local UI state
-      ↓
-    Composable
-
-    Shared screen state
-      ↓
-    ViewModel
-
-    Application/domain state
-      ↓
-    Appropriate domain/data owner
-
----
-
-Q4. How would you design a Compose screen?
-
-Start with:
-
-    UI State
-     ↓
-    Events
-     ↓
-    ViewModel
-     ↓
-    UseCase
-     ↓
-    Repository
-
-Then:
-
-    ViewModel
-      ↓
-    StateFlow<UiState>
-      ↓
-    Composable
-
----
-
-Q5. How do you prevent business logic from entering Composables?
-
-Keep Composables focused on:
-
-Render UI
-+
-Send events
-
-Business logic belongs in appropriate layers such as:
-
-ViewModel
-UseCase
-Domain
-Repository
-
----
-
-Q6. When would you use "LaunchedEffect"?
-
-When work needs to be triggered by Composition and involves a suspendable operation.
-
-Example:
-
-LaunchedEffect(userId) {
-    viewModel.loadUser(userId)
+@Test
+fun clickIncrementsCounter() {
+    composeRule.setContent { Counter() }
+    composeRule.onNodeWithText("Add").performClick()
+    composeRule.onNodeWithText("Count: 1").assertIsDisplayed()
 }
+```
 
 ---
 
-Q7. When would you use "DisposableEffect"?
+### 50. Real-World Senior Scenario
 
-When you have a setup/cleanup lifecycle:
+**"A LazyColumn of 5,000 chat messages is janky while scrolling — how do you fix it?"**
 
-    Register observer
-      ↓
-    Composable exists
-      ↓
-    Composable leaves
-      ↓
-    Unregister observer
+Answer: add stable `key`s per message, avoid unstable lambda/list params to item composables, move expensive formatting (e.g. timestamp parsing) out of the composable into the ViewModel/mapper, and use `contentType` if message layouts vary (text vs image).
 
----
-
-Q8. When would you use "derivedStateOf"?
-
-When:
-
-    Input state changes frequently
-        ↓
-    Derived result changes less frequently
-
-Example:
-
-    Scroll position
-      ↓
-    "Should Show Back To Top?"
+```kotlin
+LazyColumn {
+    items(messages, key = { it.id }, contentType = { it.type }) { message ->
+        MessageRow(message) // message.formattedTime precomputed upstream
+    }
+}
+```
 
 ---
-
-Q9. Why shouldn't you pass NavController everywhere?
-
-Because it couples reusable UI components to navigation implementation.
-
-Prefer:
-
-onNavigateToDetails: (String) -> Unit
-
-instead of:
-
-navController: NavController
-
-inside every component.
-
----
-
-Q10. How would you design a reusable Compose UI component?
-
-Make it:
-
-Stateless
-+
-Configurable
-+
-Event driven
-+
-Reusable
-+
-Testable
-
-Example:
-
-@Composable
-fun PrimaryButton(
-    text: String,
-    enabled: Boolean,
-    onClick: () -> Unit
-)
-
----
-
-🧠 Senior Interview Mental Model
-
-When an interviewer asks a Compose question, try to classify it first.
-
-                    Compose Question
-                           │
-          ┌────────────────┼────────────────┐
-          ↓                ↓                ↓
-        STATE          LIFECYCLE       PERFORMANCE
-          │                │                │
-     remember         LaunchedEffect    Stability
-     StateFlow         DisposableEffect  Skipping
-     Hoisting          SideEffect        LazyColumn
-          │                │                │
-          └────────────────┼────────────────┘
-                           ↓
-                       ARCHITECTURE
-                           │
-                    ViewModel / UDF
-                           │
-                           ↓
-                     Clean Compose
-
----
-
-🎯 What You Should Be Able to Explain in an Interview
-
-For a Senior Android Engineer, don't stop at definitions.
-
-You should be comfortable explaining:
-
-    "What?"
-      ↓
-    "Why?"
-      ↓
-    "When?"
-      ↓
-    "What happens internally?"
-      ↓
-    "What are the trade-offs?"
-      ↓
-    "How would you use it in a real application?"
-
-For example:
-
-Basic
-
-«What is "remember"?»
-
-Better
-
-«Why do we need "remember"?»
-
-Senior
-
-«What happens internally when a remembered value is used during recomposition, and how does Compose associate that value with the composition?»
-
----
-
-🚀 Final Compose Interview Framework
-
-When you get any Jetpack Compose question, think:
-
-              COMPOSE
-                 │
-      ┌──────────┼──────────┐
-      ↓          ↓          ↓
-    STATE      UI FLOW    EFFECTS
-      │          │          │
-    remember     UDF       LaunchedEffect
-    StateFlow    Events     DisposableEffect
-    Hoisting     ViewModel  SideEffect
-      │          │          │
-      └──────────┼──────────┘
-                 ↓
-            RECOMPOSITION
-                 │
-                 ↓
-             PERFORMANCE
-                 │
-       ┌─────────┼─────────┐
-       ↓         ↓         ↓
-    Stability   Skipping   Lists
-       │         │         │
-       └─────────┼─────────┘
-                 ↓
-             ARCHITECTURE
-                 │
-       ViewModel / UseCase
-                 │
-                 ↓
-          Clean Architecture
-
----
-
-🏆 Final Memory Trick
-
-Don't try to memorize 50 independent Compose questions.
-
-Remember these 8 pillars:
-
-1. 🧩 Composition
-2. 🔄 Recomposition
-3. 🧠 State
-4. 🔼 State Hoisting
-5. ⚡ Side Effects
-6. 🌊 Flow + ViewModel
-7. 🚀 Performance
-8. 🏗️ Architecture
-
-Almost every Compose interview question can be connected to one or more of these pillars.
-
----
-
-💡 Final Advice for Senior Interviews
-
-If the interviewer asks:
-
-«"Do you know Jetpack Compose?"»
-
-Don't just list:
-
-Column
-Row
-LazyColumn
-remember
-LaunchedEffect
-Navigation
-
-Instead demonstrate that you understand:
-
-    Declarative UI
-      ↓
-    State
-      ↓
-    Recomposition
-      ↓
-    UDF
-      ↓
-    ViewModel
-      ↓
-    Architecture
-      ↓
-    Performance
-
-That is the difference between:
-
-«"I have used Compose."»
-
-and:
-
-«"I understand how to build and maintain a large Compose application."»
-
----
-
-🚀 Keep Practising
-
-For every topic in this README:
-
-    Read
-     ↓
-    Understand
-     ↓
-    Write a small example
-     ↓
-    Run it
-     ↓
-    Explain it without looking
-     ↓
-    Practice the Senior follow-up
-
-The goal is not to memorize answers.
-
-«Understand the concept → understand why it exists → know when to use it → know what happens internally → explain it simply.»
-
-That's the level to aim for in a Senior Android Engineer interview.
-
-Happy Coding! 🚀
