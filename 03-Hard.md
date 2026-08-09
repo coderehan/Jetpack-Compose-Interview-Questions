@@ -609,6 +609,7 @@ For a large application:
     ├── feature-home
     ├── feature-profile
     ├── feature-booking
+    core
     │
     ├── core-ui
     ├── core-network
