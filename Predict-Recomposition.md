@@ -588,5 +588,6 @@ Fix: move the formatting out of the composable entirely — do it once in the Vi
         val timestamp: Long,
         val formattedTime: String // computed once, upstream, not in Compose
     )
+
 Now MessageRow just displays a precomputed field — no repeated work happens during scrolling, and combined with a stable key, Compose can skip rows that haven't actually changed.
----
+
