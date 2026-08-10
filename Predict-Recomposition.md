@@ -578,4 +578,15 @@ fun ChatScreen(messages: List<Message>) {
 <details>
 <summary>📤 Reveal Answer</summary>
 
-**The problem:** `formatTimestamp(message.timestamp)` runs inside the composable body, meaning it's recalculated every time that row composes — including every time it scrolls back into view, since `LazyColumn` disposes and recomposes off-screen items as they re-enter the viewport. For 5,000 messages, this repeated formatting work adds up and c
+**The problem:** 
+formatTimestamp(message.timestamp) runs inside the composable body, meaning it's recalculated every time that row composes — including every time it scrolls back into view, since LazyColumn disposes and recomposes off-screen items as they re-enter the viewport. For 5,000 messages, this repeated formatting work adds up and causes visible jank.
+Fix: move the formatting out of the composable entirely — do it once in the ViewModel or a mapper function, and store the already-formatted string on the data model itself:
+
+     data class Message(
+        val id: String,
+        val text: String,
+        val timestamp: Long,
+        val formattedTime: String // computed once, upstream, not in Compose
+    )
+Now MessageRow just displays a precomputed field — no repeated work happens during scrolling, and combined with a stable key, Compose can skip rows that haven't actually changed.
+---
